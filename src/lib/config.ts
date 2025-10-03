@@ -6,7 +6,7 @@ export const config = {
     provider: (process.env.LLM_PROVIDER || 'gemini') as LLMProvider,
   },
   gemini: {
-    apiKey: process.env.GOOGLE_GEMINI_API_KEY || 'AIzaSyD7NxkVradwtUAXEOIV6xFAcY3T3uOpeMA',
+    apiKey: process.env.GOOGLE_GEMINI_API_KEY || 'INSERT KEY',
     model: 'gemini-2.5-flash',
   },
   ollama: {
