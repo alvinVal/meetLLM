@@ -1,0 +1,98 @@
+// AI Scheduler Database Schema
+// This schema defines the data models for the AI Scheduler application
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User model - represents users in the system
+model User {
+  id             String      @id @default(cuid())
+  name           String
+  email          String?     @unique
+  color          String      @default("#6B7280") // User's color for UI
+  availabilityText String?   // Raw availability text from messages
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  // Relations
+  timeSlots      TimeSlot[]           // User's availability time slots
+  meetingParticipants MeetingParticipant[] // User's meeting participations
+  
+  @@map("users")
+}
+
+// TimeSlot model - represents availability time slots
+model TimeSlot {
+  id          String    @id @default(cuid())
+  startTime   DateTime  // Start time of the slot
+  endTime     DateTime  // End time of the slot
+  dayOfWeek   Int       // Day of week (0=Sunday, 1=Monday, etc.)
+  recurring   Boolean   @default(false) // Whether this slot recurs weekly
+  type        String    @default("available") // available, busy, preferred, unavailable
+  confidence  Float     @default(0.5) // AI confidence score (0-1)
+  originalText String?  // Original text that generated this slot
+  notes       String?   // Additional notes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("time_slots")
+}
+
+// Meeting model - represents scheduled meetings
+model Meeting {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  status      String    @default("scheduled") // scheduled, completed, cancelled
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  participants MeetingParticipant[]
+  
+  @@map("meetings")
+}
+
+// Junction table for many-to-many relationship between Meeting and User
+model MeetingParticipant {
+  id        String   @id @default(cuid())
+  meetingId String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([meetingId, userId])
+  @@map("meeting_participants")
+}
+
+// Task model - represents tasks to be scheduled
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    String    @default("medium") // low, medium, high, urgent
+  status      String    @default("pending") // pending, in_progress, completed, cancelled
+  estimatedDuration Int? // Duration in minutes
+  dueDate     DateTime?
+  tags        String?   @default("[]") // JSON string of tag array
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("tasks")
+}
